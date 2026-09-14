@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f5f5f7">
+<title>Pub Thursdays — The Mercantile Hotel Vote</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f7;color:#1c1c1e;min-height:100vh}
+button,select{font:inherit}
+.wrap{max-width:480px;margin:0 auto;padding:calc(24px + env(safe-area-inset-top)) 16px calc(32px + env(safe-area-inset-bottom))}
+h1{font-size:24px;font-weight:750;letter-spacing:-.3px;margin-bottom:4px}
+.sub{color:#777;font-size:14px;line-height:1.45;margin-bottom:24px}
+.card{background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 1px 6px rgba(0,0,0,.08)}
+.eyebrow{font-size:12px;font-weight:700;color:#bf4f24;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.pub-name{font-size:21px;font-weight:750;letter-spacing:-.2px;margin-bottom:5px}
+.pub-meta{font-size:13px;color:#777;line-height:1.45}
+.divider{height:1px;background:#ececef;margin:18px 0}
+label{display:block;font-size:12px;font-weight:650;color:#777;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+select{width:100%;padding:12px 38px 12px 14px;border:1.5px solid #dedee3;border-radius:10px;font-size:16px;outline:none;margin-bottom:18px;background:#fff;color:#1c1c1e}
+select:focus{border-color:#bf4f24;box-shadow:0 0 0 3px rgba(191,79,36,.11)}
+.rating-label{font-size:15px;font-weight:650;margin-bottom:12px}
+.rating-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.rating{min-height:48px;border:1.5px solid #dedee3;border-radius:11px;font-size:16px;font-weight:700;cursor:pointer;background:#fff;color:#1c1c1e}
+.rating:hover{border-color:#bf4f24}
+.rating:focus-visible,.btn:focus-visible,.link:focus-visible{outline:3px solid rgba(191,79,36,.3);outline-offset:2px}
+.rating.selected{background:#bf4f24;color:#fff;border-color:#bf4f24}
+.rating.absent{grid-column:1/-1;color:#777}
+.rating.absent.selected{background:#777;color:#fff;border-color:#777}
+.rating:disabled{opacity:.55;cursor:not-allowed}
+.btn{width:100%;padding:14px;background:#bf4f24;color:#fff;border:0;border-radius:12px;font-size:16px;font-weight:650;cursor:pointer;margin-top:8px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.status{font-size:13px;color:#777;line-height:1.4;margin-top:10px;min-height:18px}
+.success{color:#2e7d32;font-weight:650}
+.error{color:#c62828}
+.notice{background:#fff7ed;border:1px solid #f3d3ba;border-radius:12px;padding:13px 14px;color:#754223;font-size:13px;line-height:1.45;margin-top:14px}
+.empty{text-align:center;color:#777;padding:30px 8px;line-height:1.5}
+.loading{color:#888;text-align:center;padding:12px}
+.fine-print{font-size:12px;color:#8a8a8f;line-height:1.45;margin-top:12px}
+@media(max-width:360px){.rating-grid{gap:6px}.rating{min-height:44px}.card{padding:17px}}
+@media(prefers-reduced-motion:no-preference){.rating,.btn{transition:background .15s,border-color .15s,opacity .15s}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>🍺 Pub Thursdays</h1>
+  <p class="sub">A one-off rating window for The Mercantile Hotel</p>
+  <div id="app" aria-live="polite"></div>
+</main>
+<script>
+var db = supabase.createClient(
+  'https://wbtkgnnkhsrfkyfunfcb.supabase.co',
+  'sb_publishable_kuklLmY_4oJrIIbwMscgaA_6ecl-uZd'
+);
+var app = document.getElementById('app');
+var selectedRating = null;
+var selectedVoteToken = '';
+var voteContext = null;
+
+function setContent(markup) {
+  app.innerHTML = markup;
+}
+
+async function init() {
+  await showVote();
+}
+
+async function showVote() {
+  selectedRating = null;
+  selectedVoteToken = '';
+  voteContext = null;
+  setContent('<section class="card"><p class="loading">Loading The Mercantile Hotel…</p></section>');
+  var result = await db.rpc('get_mercantile_vote_context');
+  if (result.error) {
+    showUnavailable(result.error.message);
+    return;
+  }
+  voteContext = result.data;
+  if (!voteContext || !voteContext.selectionId) {
+    showUnavailable('The Mercantile Hotel rating window is not available.');
+    return;
+  }
+  renderVote();
+}
+
+function renderVote() {
+  setContent([
+    '<section class="card" aria-labelledby="pub-title">',
+    '<p class="eyebrow">Round <span id="round-number"></span> catch-up vote</p>',
+    '<h2 class="pub-name" id="pub-title"></h2>',
+    '<p class="pub-meta" id="pub-address"></p>',
+    '<p class="pub-meta" id="close-time"></p>',
+    '<div class="divider"></div>',
+    '<label for="member-select">Your name</label>',
+    '<select id="member-select"><option value="">Select your name…</option></select>',
+    '<p class="rating-label">What would you rate this pub?</p>',
+    '<div class="rating-grid" id="rating-grid" role="radiogroup" aria-label="Rating out of 10"></div>',
+    '<button class="btn" id="submit-vote" type="button" disabled></button>',
+    '<p class="status" id="vote-status" role="status"></p>',
+    '<p class="fine-print">Temporary voting link: choose your own name. Each name can submit once and disappears after its rating is saved.</p>',
+    '</section>'
+  ].join(''));
+
+  document.getElementById('round-number').textContent = voteContext.roundNumber == null ? '3' : String(voteContext.roundNumber);
+  document.getElementById('pub-title').textContent = voteContext.pubName || 'The Mercantile Hotel';
+  document.getElementById('pub-address').textContent = voteContext.pubAddress || '';
+  var closeTime = document.getElementById('close-time');
+  if (voteContext.closesAt) {
+    var closeDate = new Date(voteContext.closesAt);
+    if (!Number.isNaN(closeDate.getTime())) {
+      closeTime.textContent = 'Voting closes ' + closeDate.toLocaleString('en-AU', {
+        day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit'
+      });
+    }
+  }
+
+  var memberSelect = document.getElementById('member-select');
+  (voteContext.members || []).forEach(function(member) {
+    var option = document.createElement('option');
+    option.value = member.voteToken;
+    option.textContent = member.displayName;
+    option.selected = member.voteToken === selectedVoteToken;
+    memberSelect.appendChild(option);
+  });
+  memberSelect.disabled = voteContext.windowOpen === false;
+  memberSelect.onchange = function(event) {
+    selectedVoteToken = event.currentTarget.value;
+    selectedRating = null;
+    renderVote();
+  };
+
+  var grid = document.getElementById('rating-grid');
+  for (var rating = 1; rating <= 10; rating++) {
+    var option = document.createElement('button');
+    option.type = 'button';
+    option.className = 'rating';
+    option.textContent = String(rating);
+    option.dataset.rating = String(rating);
+    option.setAttribute('role', 'radio');
+    option.setAttribute('aria-checked', 'false');
+    option.disabled = !selectedVoteToken || !voteContext.canVote;
+    option.onclick = chooseRating;
+    grid.appendChild(option);
+  }
+  var absent = document.createElement('button');
+  absent.type = 'button';
+  absent.className = 'rating absent';
+  absent.textContent = "I didn't attend";
+  absent.dataset.rating = '0';
+  absent.setAttribute('role', 'radio');
+  absent.setAttribute('aria-checked', 'false');
+  absent.disabled = !selectedVoteToken || !voteContext.canVote;
+  absent.onclick = chooseRating;
+  grid.appendChild(absent);
+
+  var submit = document.getElementById('submit-vote');
+  submit.textContent = 'Submit Rating';
+  submit.onclick = submitVote;
+
+  var status = document.getElementById('vote-status');
+  if (!selectedVoteToken && voteContext.windowOpen !== false) {
+    status.className = 'status';
+    status.textContent = 'Select your name, then choose a rating.';
+  } else if (!voteContext.canVote) {
+    status.className = 'notice';
+    status.textContent = voteContext.blockedReason || 'Voting is not available.';
+  }
+}
+
+function chooseRating(event) {
+  if (!voteContext || !voteContext.canVote) return;
+  selectedRating = Number(event.currentTarget.dataset.rating);
+  document.querySelectorAll('.rating').forEach(function(button) {
+    var selected = Number(button.dataset.rating) === selectedRating;
+    button.classList.toggle('selected', selected);
+    button.setAttribute('aria-checked', selected ? 'true' : 'false');
+  });
+  var submit = document.getElementById('submit-vote');
+  submit.disabled = false;
+  var choiceLabel = selectedRating === 0 ? "Didn't attend" : selectedRating + '/10';
+  submit.textContent = 'Submit: ' + choiceLabel;
+  var status = document.getElementById('vote-status');
+  status.className = 'status';
+  status.textContent = '';
+}
+
+async function submitVote() {
+  if (!voteContext || !voteContext.canVote || !Number.isInteger(selectedRating)) return;
+  var submit = document.getElementById('submit-vote');
+  var status = document.getElementById('vote-status');
+  var options = document.querySelectorAll('.rating');
+  submit.disabled = true;
+  submit.textContent = 'Saving…';
+  options.forEach(function(option) { option.disabled = true; });
+  status.className = 'status';
+  status.textContent = '';
+
+  var result = await db.rpc('submit_mercantile_vote', {
+    p_vote_token: selectedVoteToken,
+    p_rating: String(selectedRating)
+  });
+  if (result.error) {
+    status.className = 'status error';
+    status.textContent = result.error.message;
+    submit.disabled = false;
+    submit.textContent = 'Retry';
+    options.forEach(function(option) { option.disabled = false; });
+    return;
+  }
+
+  voteContext = result.data;
+  if (!voteContext || !voteContext.selectionId) {
+    await showVote();
+    return;
+  }
+  var submittedMemberName = voteContext.submittedMemberName || 'Your';
+  selectedVoteToken = '';
+  selectedRating = null;
+  renderVote();
+  status = document.getElementById('vote-status');
+  status.className = 'status success';
+  status.textContent = '✓ ' + submittedMemberName + ' rating was saved. ' +
+    (voteContext.reconciliationMessage || 'Round 3 results are up to date.');
+}
+
+function showUnavailable(message) {
+  setContent([
+    '<section class="card">',
+    '<p class="pub-name">Voting unavailable</p>',
+    '<p class="empty" id="unavailable-message"></p>',
+    '<button class="btn" id="try-again" type="button">Try Again</button>',
+    '</section>'
+  ].join(''));
+  document.getElementById('unavailable-message').textContent = message;
+  document.getElementById('try-again').onclick = showVote;
+}
+
+init();
+</script>
+</body>
+</html>

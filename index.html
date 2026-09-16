@@ -2,242 +2,167 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#f5f5f7">
-<title>Pub Thursdays — The Mercantile Hotel Vote</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Pub Thursdays — Ratings</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f7;color:#1c1c1e;min-height:100vh}
-button,select{font:inherit}
-.wrap{max-width:480px;margin:0 auto;padding:calc(24px + env(safe-area-inset-top)) 16px calc(32px + env(safe-area-inset-bottom))}
-h1{font-size:24px;font-weight:750;letter-spacing:-.3px;margin-bottom:4px}
-.sub{color:#777;font-size:14px;line-height:1.45;margin-bottom:24px}
-.card{background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 1px 6px rgba(0,0,0,.08)}
-.eyebrow{font-size:12px;font-weight:700;color:#bf4f24;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
-.pub-name{font-size:21px;font-weight:750;letter-spacing:-.2px;margin-bottom:5px}
-.pub-meta{font-size:13px;color:#777;line-height:1.45}
-.divider{height:1px;background:#ececef;margin:18px 0}
-label{display:block;font-size:12px;font-weight:650;color:#777;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
-select{width:100%;padding:12px 38px 12px 14px;border:1.5px solid #dedee3;border-radius:10px;font-size:16px;outline:none;margin-bottom:18px;background:#fff;color:#1c1c1e}
-select:focus{border-color:#bf4f24;box-shadow:0 0 0 3px rgba(191,79,36,.11)}
-.rating-label{font-size:15px;font-weight:650;margin-bottom:12px}
-.rating-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:12px}
-.rating{min-height:48px;border:1.5px solid #dedee3;border-radius:11px;font-size:16px;font-weight:700;cursor:pointer;background:#fff;color:#1c1c1e}
-.rating:hover{border-color:#bf4f24}
-.rating:focus-visible,.btn:focus-visible,.link:focus-visible{outline:3px solid rgba(191,79,36,.3);outline-offset:2px}
-.rating.selected{background:#bf4f24;color:#fff;border-color:#bf4f24}
-.rating.absent{grid-column:1/-1;color:#777}
-.rating.absent.selected{background:#777;color:#fff;border-color:#777}
-.rating:disabled{opacity:.55;cursor:not-allowed}
-.btn{width:100%;padding:14px;background:#bf4f24;color:#fff;border:0;border-radius:12px;font-size:16px;font-weight:650;cursor:pointer;margin-top:8px}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.status{font-size:13px;color:#777;line-height:1.4;margin-top:10px;min-height:18px}
-.success{color:#2e7d32;font-weight:650}
-.error{color:#c62828}
-.notice{background:#fff7ed;border:1px solid #f3d3ba;border-radius:12px;padding:13px 14px;color:#754223;font-size:13px;line-height:1.45;margin-top:14px}
-.empty{text-align:center;color:#777;padding:30px 8px;line-height:1.5}
-.loading{color:#888;text-align:center;padding:12px}
-.fine-print{font-size:12px;color:#8a8a8f;line-height:1.45;margin-top:12px}
-@media(max-width:360px){.rating-grid{gap:6px}.rating{min-height:44px}.card{padding:17px}}
-@media(prefers-reduced-motion:no-preference){.rating,.btn{transition:background .15s,border-color .15s,opacity .15s}}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; padding: 32px 16px; }
+  h1 { font-size: 28px; font-weight: 800; text-align: center; margin-bottom: 4px; letter-spacing: -0.5px; }
+  h1 span { color: #bf4f24; }
+  .subtitle { text-align: center; color: #888; font-size: 14px; margin-bottom: 32px; }
+
+  /* Summary cards */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 32px; }
+  .stat { background: #16213e; border-radius: 14px; padding: 16px; text-align: center; border: 1px solid #ffffff0f; }
+  .stat-val { font-size: 28px; font-weight: 800; color: #bf4f24; }
+  .stat-label { font-size: 12px; color: #888; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* Pub leaderboard */
+  .section-title { font-size: 13px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+  .pubs { display: flex; flex-direction: column; gap: 10px; margin-bottom: 32px; }
+  .pub-row { background: #16213e; border-radius: 14px; padding: 16px 20px; display: flex; align-items: center; gap: 16px; border: 1px solid #ffffff0f; }
+  .pub-rank { font-size: 20px; font-weight: 800; color: #bf4f24; min-width: 32px; }
+  .pub-rank.gold { color: #f5c518; }
+  .pub-rank.silver { color: #aaa; }
+  .pub-rank.bronze { color: #cd7f32; }
+  .pub-info { flex: 1; }
+  .pub-name { font-size: 15px; font-weight: 700; }
+  .pub-meta { font-size: 12px; color: #888; margin-top: 2px; }
+  .pub-avg { font-size: 22px; font-weight: 800; color: #fff; text-align: right; }
+  .pub-avg span { font-size: 12px; color: #888; font-weight: 400; }
+  .bar-wrap { margin-top: 8px; background: #ffffff10; border-radius: 4px; height: 6px; overflow: hidden; }
+  .bar { height: 6px; border-radius: 4px; background: linear-gradient(90deg, #bf4f24, #e8834f); transition: width 0.8s ease; }
+
+  /* Full ratings table */
+  .table-wrap { overflow-x: auto; border-radius: 14px; border: 1px solid #ffffff0f; }
+  table { width: 100%; border-collapse: collapse; background: #16213e; }
+  thead th { background: #0f3460; padding: 12px 16px; text-align: left; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #aaa; white-space: nowrap; }
+  tbody tr { border-top: 1px solid #ffffff08; transition: background 0.15s; }
+  tbody tr:hover { background: #ffffff08; }
+  td { padding: 12px 16px; font-size: 14px; white-space: nowrap; }
+  .rating-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-weight: 700; font-size: 13px; }
+  .r-high { background: #1b4332; color: #52b788; }
+  .r-mid  { background: #3a2f0f; color: #f5c518; }
+  .r-low  { background: #3b1010; color: #e07070; }
+  .voter-chip { display: inline-block; background: #ffffff10; border-radius: 20px; padding: 3px 10px; font-size: 12px; color: #ccc; }
+  .picked-by { color: #bf4f24; font-weight: 600; font-size: 12px; }
+
+  @media (max-width: 480px) {
+    .pub-rank { font-size: 16px; }
+    .pub-avg { font-size: 18px; }
+  }
 </style>
 </head>
 <body>
-<main class="wrap">
-  <h1>🍺 Pub Thursdays</h1>
-  <p class="sub">A one-off rating window for The Mercantile Hotel</p>
-  <div id="app" aria-live="polite"></div>
-</main>
+
+<h1>🍺 Pub <span>Thursdays</span></h1>
+<p class="subtitle">Round 3 ratings &mdash; as of 16 September 2026</p>
+
+<!-- Summary stats -->
+<div class="stats">
+  <div class="stat"><div class="stat-val">6</div><div class="stat-label">Pubs Visited</div></div>
+  <div class="stat"><div class="stat-val">26</div><div class="stat-label">Ratings Cast</div></div>
+  <div class="stat"><div class="stat-val">6.3</div><div class="stat-label">Overall Avg</div></div>
+  <div class="stat"><div class="stat-val">6</div><div class="stat-label">Members</div></div>
+</div>
+
+<!-- Pub leaderboard -->
+<p class="section-title">Pub Leaderboard</p>
+<div class="pubs" id="pubs"></div>
+
+<!-- Full table -->
+<p class="section-title">All Ratings</p>
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Pub</th>
+        <th>Picked By</th>
+        <th>Voter</th>
+        <th>Rating</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
 <script>
-var db = supabase.createClient(
-  'https://wbtkgnnkhsrfkyfunfcb.supabase.co',
-  'sb_publishable_kuklLmY_4oJrIIbwMscgaA_6ecl-uZd'
-);
-var app = document.getElementById('app');
-var selectedRating = null;
-var selectedVoteToken = '';
-var voteContext = null;
+var ratings = [
+  { date: '10 Sep', pub: 'Mercantile Hotel',                   picked: 'Rups',              voter: 'Brun',              r: 7 },
+  { date: '10 Sep', pub: 'Mercantile Hotel',                   picked: 'Rups',              voter: 'Grippy McCarroll',  r: 7 },
+  { date: '10 Sep', pub: 'Mercantile Hotel',                   picked: 'Rups',              voter: 'Hardon Eddie',      r: 7 },
+  { date: '10 Sep', pub: 'Mercantile Hotel',                   picked: 'Rups',              voter: 'Jordy Pordy',       r: 7 },
+  { date: '10 Sep', pub: 'Mercantile Hotel',                   picked: 'Rups',              voter: 'Rafi',              r: 0 },
+  { date: '13 Aug', pub: 'Hyde Park House',                    picked: 'Hardon Eddie',      voter: 'Brun',              r: 8 },
+  { date: '13 Aug', pub: 'Hyde Park House',                    picked: 'Hardon Eddie',      voter: 'Grippy McCarroll',  r: 7 },
+  { date: '13 Aug', pub: 'Hyde Park House',                    picked: 'Hardon Eddie',      voter: 'Rafi',              r: 8 },
+  { date: '6 Aug',  pub: 'The Light Brigade',                  picked: 'Rafi',              voter: 'Brun',              r: 7 },
+  { date: '6 Aug',  pub: 'The Light Brigade',                  picked: 'Rafi',              voter: 'Grippy McCarroll',  r: 7 },
+  { date: '6 Aug',  pub: 'The Light Brigade',                  picked: 'Rafi',              voter: 'Hardon Eddie',      r: 8 },
+  { date: '6 Aug',  pub: 'The Light Brigade',                  picked: 'Rafi',              voter: 'Rups',              r: 7 },
+  { date: '23 Jul', pub: 'East Village Hotel Sydney',          picked: 'Brun',              voter: 'Grippy McCarroll',  r: 8 },
+  { date: '23 Jul', pub: 'East Village Hotel Sydney',          picked: 'Brun',              voter: 'Hardon Eddie',      r: 7 },
+  { date: '23 Jul', pub: 'East Village Hotel Sydney',          picked: 'Brun',              voter: 'Jordy Pordy',       r: 6 },
+  { date: '23 Jul', pub: 'East Village Hotel Sydney',          picked: 'Brun',              voter: 'Rafi',              r: 8 },
+  { date: '23 Jul', pub: 'East Village Hotel Sydney',          picked: 'Brun',              voter: 'Rups',              r: 7 },
+  { date: '9 Jul',  pub: 'The Belroy Hotel',                   picked: 'Jordy Pordy',       voter: 'Brun',              r: 6 },
+  { date: '9 Jul',  pub: 'The Belroy Hotel',                   picked: 'Jordy Pordy',       voter: 'Grippy McCarroll',  r: 0 },
+  { date: '9 Jul',  pub: 'The Belroy Hotel',                   picked: 'Jordy Pordy',       voter: 'Hardon Eddie',      r: 5 },
+  { date: '9 Jul',  pub: 'The Belroy Hotel',                   picked: 'Jordy Pordy',       voter: 'Rafi',              r: 5 },
+  { date: '9 Jul',  pub: 'The Belroy Hotel',                   picked: 'Jordy Pordy',       voter: 'Rups',              r: 6 },
+  { date: '2 Jul',  pub: 'The Captain Cook Hotel Paddington',  picked: 'Grippy McCarroll',  voter: 'Brun',              r: 7 },
+  { date: '2 Jul',  pub: 'The Captain Cook Hotel Paddington',  picked: 'Grippy McCarroll',  voter: 'Hardon Eddie',      r: 7 },
+  { date: '2 Jul',  pub: 'The Captain Cook Hotel Paddington',  picked: 'Grippy McCarroll',  voter: 'Jordy Pordy',       r: 0 },
+  { date: '2 Jul',  pub: 'The Captain Cook Hotel Paddington',  picked: 'Grippy McCarroll',  voter: 'Rafi',              r: 6 },
+  { date: '2 Jul',  pub: 'The Captain Cook Hotel Paddington',  picked: 'Grippy McCarroll',  voter: 'Rups',              r: 7 },
+];
 
-function setContent(markup) {
-  app.innerHTML = markup;
-}
+// Build leaderboard
+var pubMap = {};
+ratings.forEach(function(r) {
+  if (!pubMap[r.pub]) pubMap[r.pub] = { name: r.pub, date: r.date, picked: r.picked, total: 0, count: 0 };
+  pubMap[r.pub].total += r.r;
+  pubMap[r.pub].count++;
+});
+var pubs = Object.values(pubMap).map(function(p) {
+  return { name: p.name, date: p.date, picked: p.picked, avg: p.total / p.count, count: p.count };
+}).sort(function(a, b) { return b.avg - a.avg; });
 
-async function init() {
-  await showVote();
-}
+var rankColors = ['gold', 'silver', 'bronze'];
+var rankEmoji = ['🥇', '🥈', '🥉'];
+var pubsEl = document.getElementById('pubs');
+pubs.forEach(function(p, i) {
+  var pct = (p.avg / 10 * 100).toFixed(0);
+  var rankClass = rankColors[i] || '';
+  var medal = rankEmoji[i] || (i + 1);
+  pubsEl.innerHTML += [
+    '<div class="pub-row">',
+    '<div class="pub-rank ' + rankClass + '">' + medal + '</div>',
+    '<div class="pub-info">',
+    '<div class="pub-name">' + p.name + '</div>',
+    '<div class="pub-meta">' + p.date + ' &middot; ' + p.count + ' ratings &middot; Picked by <span style="color:#bf4f24">' + p.picked + '</span></div>',
+    '<div class="bar-wrap"><div class="bar" style="width:' + pct + '%"></div></div>',
+    '</div>',
+    '<div class="pub-avg">' + p.avg.toFixed(1) + '<br><span>/10</span></div>',
+    '</div>'
+  ].join('');
+});
 
-async function showVote() {
-  selectedRating = null;
-  selectedVoteToken = '';
-  voteContext = null;
-  setContent('<section class="card"><p class="loading">Loading The Mercantile Hotel…</p></section>');
-  var result = await db.rpc('get_mercantile_vote_context');
-  if (result.error) {
-    showUnavailable(result.error.message);
-    return;
-  }
-  voteContext = result.data;
-  if (!voteContext || !voteContext.selectionId) {
-    showUnavailable('The Mercantile Hotel rating window is not available.');
-    return;
-  }
-  renderVote();
-}
-
-function renderVote() {
-  setContent([
-    '<section class="card" aria-labelledby="pub-title">',
-    '<p class="eyebrow">Round <span id="round-number"></span> catch-up vote</p>',
-    '<h2 class="pub-name" id="pub-title"></h2>',
-    '<p class="pub-meta" id="pub-address"></p>',
-    '<p class="pub-meta" id="close-time"></p>',
-    '<div class="divider"></div>',
-    '<label for="member-select">Your name</label>',
-    '<select id="member-select"><option value="">Select your name…</option></select>',
-    '<p class="rating-label">What would you rate this pub?</p>',
-    '<div class="rating-grid" id="rating-grid" role="radiogroup" aria-label="Rating out of 10"></div>',
-    '<button class="btn" id="submit-vote" type="button" disabled></button>',
-    '<p class="status" id="vote-status" role="status"></p>',
-    '<p class="fine-print">Temporary voting link: choose your own name. Each name can submit once and disappears after its rating is saved.</p>',
-    '</section>'
-  ].join(''));
-
-  document.getElementById('round-number').textContent = voteContext.roundNumber == null ? '3' : String(voteContext.roundNumber);
-  document.getElementById('pub-title').textContent = voteContext.pubName || 'The Mercantile Hotel';
-  document.getElementById('pub-address').textContent = voteContext.pubAddress || '';
-  var closeTime = document.getElementById('close-time');
-  if (voteContext.closesAt) {
-    var closeDate = new Date(voteContext.closesAt);
-    if (!Number.isNaN(closeDate.getTime())) {
-      closeTime.textContent = 'Voting closes ' + closeDate.toLocaleString('en-AU', {
-        day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit'
-      });
-    }
-  }
-
-  var memberSelect = document.getElementById('member-select');
-  (voteContext.members || []).forEach(function(member) {
-    var option = document.createElement('option');
-    option.value = member.voteToken;
-    option.textContent = member.displayName;
-    option.selected = member.voteToken === selectedVoteToken;
-    memberSelect.appendChild(option);
-  });
-  memberSelect.disabled = voteContext.windowOpen === false;
-  memberSelect.onchange = function(event) {
-    selectedVoteToken = event.currentTarget.value;
-    selectedRating = null;
-    renderVote();
-  };
-
-  var grid = document.getElementById('rating-grid');
-  for (var rating = 1; rating <= 10; rating++) {
-    var option = document.createElement('button');
-    option.type = 'button';
-    option.className = 'rating';
-    option.textContent = String(rating);
-    option.dataset.rating = String(rating);
-    option.setAttribute('role', 'radio');
-    option.setAttribute('aria-checked', 'false');
-    option.disabled = !selectedVoteToken || !voteContext.canVote;
-    option.onclick = chooseRating;
-    grid.appendChild(option);
-  }
-  var absent = document.createElement('button');
-  absent.type = 'button';
-  absent.className = 'rating absent';
-  absent.textContent = "I didn't attend";
-  absent.dataset.rating = '0';
-  absent.setAttribute('role', 'radio');
-  absent.setAttribute('aria-checked', 'false');
-  absent.disabled = !selectedVoteToken || !voteContext.canVote;
-  absent.onclick = chooseRating;
-  grid.appendChild(absent);
-
-  var submit = document.getElementById('submit-vote');
-  submit.textContent = 'Submit Rating';
-  submit.onclick = submitVote;
-
-  var status = document.getElementById('vote-status');
-  if (!selectedVoteToken && voteContext.windowOpen !== false) {
-    status.className = 'status';
-    status.textContent = 'Select your name, then choose a rating.';
-  } else if (!voteContext.canVote) {
-    status.className = 'notice';
-    status.textContent = voteContext.blockedReason || 'Voting is not available.';
-  }
-}
-
-function chooseRating(event) {
-  if (!voteContext || !voteContext.canVote) return;
-  selectedRating = Number(event.currentTarget.dataset.rating);
-  document.querySelectorAll('.rating').forEach(function(button) {
-    var selected = Number(button.dataset.rating) === selectedRating;
-    button.classList.toggle('selected', selected);
-    button.setAttribute('aria-checked', selected ? 'true' : 'false');
-  });
-  var submit = document.getElementById('submit-vote');
-  submit.disabled = false;
-  var choiceLabel = selectedRating === 0 ? "Didn't attend" : selectedRating + '/10';
-  submit.textContent = 'Submit: ' + choiceLabel;
-  var status = document.getElementById('vote-status');
-  status.className = 'status';
-  status.textContent = '';
-}
-
-async function submitVote() {
-  if (!voteContext || !voteContext.canVote || !Number.isInteger(selectedRating)) return;
-  var submit = document.getElementById('submit-vote');
-  var status = document.getElementById('vote-status');
-  var options = document.querySelectorAll('.rating');
-  submit.disabled = true;
-  submit.textContent = 'Saving…';
-  options.forEach(function(option) { option.disabled = true; });
-  status.className = 'status';
-  status.textContent = '';
-
-  var result = await db.rpc('submit_mercantile_vote', {
-    p_vote_token: selectedVoteToken,
-    p_rating: String(selectedRating)
-  });
-  if (result.error) {
-    status.className = 'status error';
-    status.textContent = result.error.message;
-    submit.disabled = false;
-    submit.textContent = 'Retry';
-    options.forEach(function(option) { option.disabled = false; });
-    return;
-  }
-
-  voteContext = result.data;
-  if (!voteContext || !voteContext.selectionId) {
-    await showVote();
-    return;
-  }
-  var submittedMemberName = voteContext.submittedMemberName || 'Your';
-  selectedVoteToken = '';
-  selectedRating = null;
-  renderVote();
-  status = document.getElementById('vote-status');
-  status.className = 'status success';
-  status.textContent = '✓ ' + submittedMemberName + ' rating was saved. ' +
-    (voteContext.reconciliationMessage || 'Round 3 results are up to date.');
-}
-
-function showUnavailable(message) {
-  setContent([
-    '<section class="card">',
-    '<p class="pub-name">Voting unavailable</p>',
-    '<p class="empty" id="unavailable-message"></p>',
-    '<button class="btn" id="try-again" type="button">Try Again</button>',
-    '</section>'
-  ].join(''));
-  document.getElementById('unavailable-message').textContent = message;
-  document.getElementById('try-again').onclick = showVote;
-}
-
-init();
+// Build table
+var tbody = document.getElementById('tbody');
+ratings.forEach(function(r) {
+  var cls = r.r >= 7 ? 'r-high' : r.r >= 5 ? 'r-mid' : 'r-low';
+  var tr = document.createElement('tr');
+  tr.innerHTML = [
+    '<td>' + r.date + '</td>',
+    '<td style="font-weight:600">' + r.pub + '</td>',
+    '<td><span class="picked-by">' + r.picked + '</span></td>',
+    '<td><span class="voter-chip">' + r.voter + '</span></td>',
+    '<td><span class="rating-badge ' + cls + '">' + r.r + '/10</span></td>'
+  ].join('');
+  tbody.appendChild(tr);
+});
 </script>
 </body>
 </html>

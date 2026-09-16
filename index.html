@@ -44,6 +44,7 @@
   .r-high { background: #1b4332; color: #52b788; }
   .r-mid  { background: #3a2f0f; color: #f5c518; }
   .r-low  { background: #3b1010; color: #e07070; }
+  .r-none { background: #ffffff10; color: #777; }
   .voter-chip { display: inline-block; background: #ffffff10; border-radius: 20px; padding: 3px 10px; font-size: 12px; color: #ccc; }
   .picked-by { color: #bf4f24; font-weight: 600; font-size: 12px; }
 
@@ -61,8 +62,8 @@
 <!-- Summary stats -->
 <div class="stats">
   <div class="stat"><div class="stat-val">6</div><div class="stat-label">Pubs Visited</div></div>
-  <div class="stat"><div class="stat-val">26</div><div class="stat-label">Ratings Cast</div></div>
-  <div class="stat"><div class="stat-val">6.3</div><div class="stat-label">Overall Avg</div></div>
+  <div class="stat"><div class="stat-val">23</div><div class="stat-label">Ratings Cast</div></div>
+  <div class="stat"><div class="stat-val">7.2</div><div class="stat-label">Overall Avg</div></div>
   <div class="stat"><div class="stat-val">6</div><div class="stat-label">Members</div></div>
 </div>
 
@@ -93,7 +94,7 @@ var ratings = [
   { date: '10 Sep', pub: 'Mercantile Hotel',                   picked: 'Rups',              voter: 'Grippy McCarroll',  r: 7 },
   { date: '10 Sep', pub: 'Mercantile Hotel',                   picked: 'Rups',              voter: 'Hardon Eddie',      r: 7 },
   { date: '10 Sep', pub: 'Mercantile Hotel',                   picked: 'Rups',              voter: 'Jordy Pordy',       r: 7 },
-  { date: '10 Sep', pub: 'Mercantile Hotel',                   picked: 'Rups',              voter: 'Rafi',              r: 0 },
+  { date: '10 Sep', pub: 'Mercantile Hotel',                   picked: 'Rups',              voter: 'Rafi',              r: null },
   { date: '13 Aug', pub: 'Hyde Park House',                    picked: 'Hardon Eddie',      voter: 'Brun',              r: 8 },
   { date: '13 Aug', pub: 'Hyde Park House',                    picked: 'Hardon Eddie',      voter: 'Grippy McCarroll',  r: 7 },
   { date: '13 Aug', pub: 'Hyde Park House',                    picked: 'Hardon Eddie',      voter: 'Rafi',              r: 8 },
@@ -107,13 +108,13 @@ var ratings = [
   { date: '23 Jul', pub: 'East Village Hotel Sydney',          picked: 'Brun',              voter: 'Rafi',              r: 8 },
   { date: '23 Jul', pub: 'East Village Hotel Sydney',          picked: 'Brun',              voter: 'Rups',              r: 7 },
   { date: '9 Jul',  pub: 'The Belroy Hotel',                   picked: 'Jordy Pordy',       voter: 'Brun',              r: 6 },
-  { date: '9 Jul',  pub: 'The Belroy Hotel',                   picked: 'Jordy Pordy',       voter: 'Grippy McCarroll',  r: 0 },
+  { date: '9 Jul',  pub: 'The Belroy Hotel',                   picked: 'Jordy Pordy',       voter: 'Grippy McCarroll',  r: null },
   { date: '9 Jul',  pub: 'The Belroy Hotel',                   picked: 'Jordy Pordy',       voter: 'Hardon Eddie',      r: 5 },
   { date: '9 Jul',  pub: 'The Belroy Hotel',                   picked: 'Jordy Pordy',       voter: 'Rafi',              r: 5 },
   { date: '9 Jul',  pub: 'The Belroy Hotel',                   picked: 'Jordy Pordy',       voter: 'Rups',              r: 6 },
   { date: '2 Jul',  pub: 'The Captain Cook Hotel Paddington',  picked: 'Grippy McCarroll',  voter: 'Brun',              r: 7 },
   { date: '2 Jul',  pub: 'The Captain Cook Hotel Paddington',  picked: 'Grippy McCarroll',  voter: 'Hardon Eddie',      r: 7 },
-  { date: '2 Jul',  pub: 'The Captain Cook Hotel Paddington',  picked: 'Grippy McCarroll',  voter: 'Jordy Pordy',       r: 0 },
+  { date: '2 Jul',  pub: 'The Captain Cook Hotel Paddington',  picked: 'Grippy McCarroll',  voter: 'Jordy Pordy',       r: null },
   { date: '2 Jul',  pub: 'The Captain Cook Hotel Paddington',  picked: 'Grippy McCarroll',  voter: 'Rafi',              r: 6 },
   { date: '2 Jul',  pub: 'The Captain Cook Hotel Paddington',  picked: 'Grippy McCarroll',  voter: 'Rups',              r: 7 },
 ];
@@ -122,6 +123,7 @@ var ratings = [
 var pubMap = {};
 ratings.forEach(function(r) {
   if (!pubMap[r.pub]) pubMap[r.pub] = { name: r.pub, date: r.date, picked: r.picked, total: 0, count: 0 };
+  if (r.r == null) return; // nil rating — not counted
   pubMap[r.pub].total += r.r;
   pubMap[r.pub].count++;
 });
@@ -152,14 +154,15 @@ pubs.forEach(function(p, i) {
 // Build table
 var tbody = document.getElementById('tbody');
 ratings.forEach(function(r) {
-  var cls = r.r >= 7 ? 'r-high' : r.r >= 5 ? 'r-mid' : 'r-low';
+  var cls = r.r == null ? 'r-none' : r.r >= 7 ? 'r-high' : r.r >= 5 ? 'r-mid' : 'r-low';
+  var label = r.r == null ? 'No rating' : r.r + '/10';
   var tr = document.createElement('tr');
   tr.innerHTML = [
     '<td>' + r.date + '</td>',
     '<td style="font-weight:600">' + r.pub + '</td>',
     '<td><span class="picked-by">' + r.picked + '</span></td>',
     '<td><span class="voter-chip">' + r.voter + '</span></td>',
-    '<td><span class="rating-badge ' + cls + '">' + r.r + '/10</span></td>'
+    '<td><span class="rating-badge ' + cls + '">' + label + '</span></td>'
   ].join('');
   tbody.appendChild(tr);
 });
